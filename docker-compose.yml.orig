@@ -89,7 +89,7 @@ services:
     image: icinga/icingaweb2
     restart: on-failure
     volumes:
-      - ./vols/icingaweb:/data
+      - icingaweb:/data
 
   # The Icinga 2 docker image does not support configuration via env vars at the moment.
   # So, we have to ship some configs with this little init container. Referenced in depends_on of the icinga2 service.
@@ -99,7 +99,7 @@ services:
     image: icinga/icinga2
     logging: *default-logging
     volumes:
-      - ./vols/icinga2:/data
+      - icinga2:/data
       - ./icingadb.conf:/config/icingadb.conf
       - ./icingaweb-api-user.conf:/config/icingaweb-api-user.conf
       - ./init-icinga2.sh:/config/init-icinga2.sh
@@ -115,7 +115,7 @@ services:
     ports:
       - 5665:5665
     volumes:
-      - ./vols/icinga2:/data
+      - icinga2:/data
       - ./icinga2.conf.d:/custom_data/custom.conf.d
 
   icingadb:
@@ -151,7 +151,7 @@ services:
     # Please note that this needs a more sophisticated solution.
     restart: on-failure
     volumes:
-      - ./vols/icingaweb:/data
+      - icingaweb:/data
 
   mysql:
     image: mariadb:10.7
@@ -163,5 +163,10 @@ services:
       ICINGA_DIRECTOR_MYSQL_PASSWORD: ${ICINGA_DIRECTOR_MYSQL_PASSWORD:-director}
     logging: *default-logging
     volumes:
-      - ./vols/mysql:/var/lib/mysql
+      - mysql:/var/lib/mysql
       - ./env/mysql/:/docker-entrypoint-initdb.d/
+
+volumes:
+  icinga2:
+  icingaweb:
+  mysql:
