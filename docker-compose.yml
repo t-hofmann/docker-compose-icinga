@@ -71,7 +71,11 @@ networks:
     name: icinga-playground
 
 services:
+
   director:
+
+    image: icinga/icingaweb2
+
     command:
       - /bin/bash
       - -ce
@@ -86,37 +90,32 @@ services:
         icingacli director daemon run
     entrypoint: []
     logging: *default-logging
-    image: icinga/icingaweb2
     restart: on-failure
     volumes:
-      - ./vols/icingaweb:/data
+      - ./vols/icingaweb:/data:z
 
   # The Icinga 2 docker image does not support configuration via env vars at the moment.
   # So, we have to ship some configs with this little init container. Referenced in depends_on of the icinga2 service.
-  init-icinga2:
-    command: [ "/config/init-icinga2.sh" ]
+  icinga2:
+
+    image: icinga2
+    build:
+      context: ./build/icinga2
+
+    command: [ "/run.sh" ]
+
     environment: *icinga2-environment
-    image: icinga/icinga2
     logging: *default-logging
     volumes:
-      - ./vols/icinga2:/data
-      - ./icingadb.conf:/config/icingadb.conf
-      - ./icingaweb-api-user.conf:/config/icingaweb-api-user.conf
-      - ./init-icinga2.sh:/config/init-icinga2.sh
+      # - ./vols/icinga2:/data
+      - ./icinga2.conf.d:/custom_data/custom.conf.d
 
-  icinga2:
-    command: [ "sh", "-c", "sleep 5 ; icinga2 daemon" ]
+    # command: [ "sh", "-c", "sleep 5 ; icinga2 daemon" ]
+
     depends_on:
       - icingadb-redis
-      - init-icinga2
-    environment: *icinga2-environment
-    image: icinga/icinga2
-    logging: *default-logging
     ports:
       - 5665:5665
-    volumes:
-      - ./vols/icinga2:/data
-      - ./icinga2.conf.d:/custom_data/custom.conf.d
 
   icingadb:
     environment:
@@ -138,23 +137,28 @@ services:
     logging: *default-logging
 
   icingaweb:
+
+    image: icinga/icingaweb2
+
     depends_on:
       - mysql
     environment:
       icingaweb.enabledModules: director, icingadb, incubator
       <<: [*icinga-db-web-config, *icinga-director-config, *icinga-web-config]
     logging: *default-logging
-    image: icinga/icingaweb2
+
     ports:
       - 8080:8080
     # Restart Icinga Web container automatically since we have to wait for the database to be ready.
     # Please note that this needs a more sophisticated solution.
     restart: on-failure
     volumes:
-      - ./vols/icingaweb:/data
+      - ./vols/icingaweb:/data:z
 
   mysql:
+
     image: mariadb:10.7
+
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: 1
