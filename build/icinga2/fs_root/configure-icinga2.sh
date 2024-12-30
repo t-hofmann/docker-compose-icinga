@@ -15,6 +15,3 @@ if [ ! -f $ICINGADB_CONF ]; then
   mkdir -p /data/etc/icinga2/features-enabled
   cp /template/icingadb.conf $ICINGADB_CONF
 fi
-
-# chown icinga:icinga /data/etc/icinga2 -R
-# chown icinga:icinga /data/var/lib/icinga2 -R
